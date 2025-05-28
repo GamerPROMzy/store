@@ -99,6 +99,31 @@
       resize: vertical;
     }
   </style>
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyD_6mjjH6gnMaaAj5JluGLeruU3Oo6tVt8",
+      authDomain: "gharwalibat-store.firebaseapp.com",
+      projectId: "gharwalibat-store",
+      storageBucket: "gharwalibat-store.firebasestorage.app",
+      messagingSenderId: "538836040317",
+      appId: "1:538836040317:web:4230f34faa754c5cfecf14"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const auth = firebase.auth();
+  </script>
+  <script>
+    auth.onAuthStateChanged(user => {
+      if (!user) {
+        window.location.href = 'login.html';
+      }
+    });
+  </script>
 </head>
 <body>
   <header>
@@ -134,75 +159,67 @@
   </footer>
 
   <script>
-    // Redirect to login if not logged in
-    if (localStorage.getItem("loggedIn") !== "true") {
-      window.location.href = "login.html";
-    }
+    const products = [];
 
-    const products = [
-      { name: "Thekua", price: 120, label: "Rs. 120 / 250g", image: "https://via.placeholder.com/250x200?text=Thekua", buyLink: "https://rzp.io/l/gharwalibat-thekua", active: true },
-      { name: "Mathri", price: 100, label: "Rs. 100 / 200g", image: "https://via.placeholder.com/250x200?text=Mathri", buyLink: "https://rzp.io/l/gharwalibat-mathri", active: true },
-      { name: "Namkeen Mix", price: 90, label: "Rs. 90 / 200g", image: "https://via.placeholder.com/250x200?text=Namkeen", buyLink: "https://rzp.io/l/gharwalibat-namkeen", active: true }
-    ];
-
-    const productGrid = document.getElementById("productGrid");
-    const cartItems = document.getElementById("cartItems");
-    const cartTotal = document.getElementById("cartTotal");
-    let cart = [];
-
-    function renderProducts() {
+    db.collection("products").onSnapshot(snapshot => {
+      const productGrid = document.getElementById("productGrid");
       productGrid.innerHTML = "";
-      products.forEach((p, i) => {
+      snapshot.forEach(doc => {
+        const p = doc.data();
         if (p.active) {
           productGrid.innerHTML += `
             <div class="product">
               <img src="${p.image}" alt="${p.name}" />
               <h3>${p.name}</h3>
               <p>${p.label}</p>
-              <button class="cart-btn" onclick="addToCart(${i})">Add to Cart</button>
+              <button class="cart-btn" onclick="addToCart(${p.price}, '${p.name}')">Add to Cart</button>
             </div>`;
         }
       });
-    }
+    });
 
-    function addToCart(index) {
-      cart.push(products[index]);
+    const cart = [];
+    function addToCart(price, name) {
+      cart.push({ name, price });
       renderCart();
     }
-
     function renderCart() {
+      const cartItems = document.getElementById("cartItems");
+      const cartTotal = document.getElementById("cartTotal");
       cartItems.innerHTML = "";
       let total = 0;
-      cart.forEach((item) => {
+      cart.forEach(item => {
         cartItems.innerHTML += `<li class="cart-item">${item.name} - Rs. ${item.price}</li>`;
         total += item.price;
       });
       cartTotal.textContent = total;
     }
-
     function checkout() {
       if (cart.length === 0) return alert("Cart is empty");
       const name = prompt("Enter your name for the order:");
       const time = new Date().toLocaleString();
-      cart = [];
+      cart.forEach(item => {
+        db.collection("orders").add({
+          customer: name,
+          item: item.name,
+          price: item.price,
+          time
+        });
+      });
+      cart.length = 0;
       renderCart();
       alert("Order placed successfully!");
     }
-
     function submitContactForm(event) {
       event.preventDefault();
       const name = document.getElementById("customerName").value;
       const email = document.getElementById("customerEmail").value;
       const message = document.getElementById("customMessage").value;
-
       alert(`Thank you, ${name}! We'll contact you at ${email}.\n\nMessage: ${message}`);
-
       document.getElementById("customerName").value = '';
       document.getElementById("customerEmail").value = '';
       document.getElementById("customMessage").value = '';
     }
-
-    renderProducts();
   </script>
 </body>
 </html>
