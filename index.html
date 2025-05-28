@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gharwalibat - Traditional Snacks</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #fdf6ec;
+      color: #333;
+    }
+    header {
+      background-color: #7e4f2e;
+      color: white;
+      padding: 20px;
+      text-align: center;
+    }
+    .tagline {
+      font-size: 1.2em;
+      color: #ffe9cc;
+    }
+    .container {
+      padding: 40px 20px;
+      max-width: 1000px;
+      margin: auto;
+    }
+    .product-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+    }
+    .product {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+    .product img {
+      width: 100%;
+      height: 200px;
+      object-fit: cover;
+      border-radius: 8px;
+    }
+    .buy-btn, .cart-btn, .checkout-btn {
+      background: #ff914d;
+      color: white;
+      padding: 10px 16px;
+      border: none;
+      border-radius: 8px;
+      margin-top: 10px;
+      font-size: 1em;
+      cursor: pointer;
+    }
+    footer {
+      background-color: #7e4f2e;
+      color: white;
+      text-align: center;
+      padding: 15px;
+    }
+    a {
+      color: white;
+      text-decoration: none;
+    }
+    .cart {
+      background-color: #fff7e6;
+      padding: 20px;
+      border-radius: 12px;
+      margin-top: 40px;
+    }
+    .cart ul {
+      list-style: none;
+      padding: 0;
+    }
+    .cart-item {
+      padding: 8px 0;
+      border-bottom: 1px solid #ccc;
+    }
+    .custom-order {
+      background: #fff7e6;
+      padding: 30px;
+      border-radius: 12px;
+      margin-top: 40px;
+    }
+    .custom-order input, .custom-order textarea {
+      width: 100%;
+      padding: 10px;
+      margin-top: 10px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 1em;
+    }
+    .custom-order textarea {
+      height: 100px;
+      resize: vertical;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Gharwalibat</h1>
+    <p class="tagline">Swad Ghar Ka, Baat Ghar Ki.</p>
+  </header>
+
+  <div class="container">
+    <h2>Our Snacks</h2>
+    <div class="product-grid" id="productGrid"></div>
+
+    <div class="cart" id="cart">
+      <h2>Cart</h2>
+      <ul id="cartItems"></ul>
+      <p><strong>Total:</strong> Rs. <span id="cartTotal">0</span></p>
+      <button class="checkout-btn" onclick="checkout()">Checkout</button>
+    </div>
+
+    <div class="custom-order">
+      <h2>Custom Order / Contact Us</h2>
+      <p>If you want to place a bulk or custom order, fill out the form below and we’ll get back to you shortly!</p>
+      <form onsubmit="submitContactForm(event)">
+        <input type="text" id="customerName" placeholder="Your Name" required>
+        <input type="email" id="customerEmail" placeholder="Your Email" required>
+        <textarea id="customMessage" placeholder="Your Message" required></textarea>
+        <button type="submit" class="checkout-btn">Send</button>
+      </form>
+    </div>
+  </div>
+
+  <footer>
+    <p>&copy; 2025 Gharwalibat | <a href="https://instagram.com/gharwalibat" target="_blank"><i class="fab fa-instagram"></i> Instagram</a></p>
+  </footer>
+
+  <script>
+    // Redirect to login if not logged in
+    if (localStorage.getItem("loggedIn") !== "true") {
+      window.location.href = "login.html";
+    }
+
+    const products = [
+      { name: "Thekua", price: 120, label: "Rs. 120 / 250g", image: "https://via.placeholder.com/250x200?text=Thekua", buyLink: "https://rzp.io/l/gharwalibat-thekua", active: true },
+      { name: "Mathri", price: 100, label: "Rs. 100 / 200g", image: "https://via.placeholder.com/250x200?text=Mathri", buyLink: "https://rzp.io/l/gharwalibat-mathri", active: true },
+      { name: "Namkeen Mix", price: 90, label: "Rs. 90 / 200g", image: "https://via.placeholder.com/250x200?text=Namkeen", buyLink: "https://rzp.io/l/gharwalibat-namkeen", active: true }
+    ];
+
+    const productGrid = document.getElementById("productGrid");
+    const cartItems = document.getElementById("cartItems");
+    const cartTotal = document.getElementById("cartTotal");
+    let cart = [];
+
+    function renderProducts() {
+      productGrid.innerHTML = "";
+      products.forEach((p, i) => {
+        if (p.active) {
+          productGrid.innerHTML += `
+            <div class="product">
+              <img src="${p.image}" alt="${p.name}" />
+              <h3>${p.name}</h3>
+              <p>${p.label}</p>
+              <button class="cart-btn" onclick="addToCart(${i})">Add to Cart</button>
+            </div>`;
+        }
+      });
+    }
+
+    function addToCart(index) {
+      cart.push(products[index]);
+      renderCart();
+    }
+
+    function renderCart() {
+      cartItems.innerHTML = "";
+      let total = 0;
+      cart.forEach((item) => {
+        cartItems.innerHTML += `<li class="cart-item">${item.name} - Rs. ${item.price}</li>`;
+        total += item.price;
+      });
+      cartTotal.textContent = total;
+    }
+
+    function checkout() {
+      if (cart.length === 0) return alert("Cart is empty");
+      const name = prompt("Enter your name for the order:");
+      const time = new Date().toLocaleString();
+      cart = [];
+      renderCart();
+      alert("Order placed successfully!");
+    }
+
+    function submitContactForm(event) {
+      event.preventDefault();
+      const name = document.getElementById("customerName").value;
+      const email = document.getElementById("customerEmail").value;
+      const message = document.getElementById("customMessage").value;
+
+      alert(`Thank you, ${name}! We'll contact you at ${email}.\n\nMessage: ${message}`);
+
+      document.getElementById("customerName").value = '';
+      document.getElementById("customerEmail").value = '';
+      document.getElementById("customMessage").value = '';
+    }
+
+    renderProducts();
+  </script>
+</body>
+</html>
